@@ -1,5 +1,5 @@
 export function usePushNotifications() {
-  const supabase = useHomeSupabase()
+  const api = useApiClient()
   const config = useRuntimeConfig()
   const { profile } = useAuth()
   const permission = ref<NotificationPermission>('default')
@@ -10,24 +10,15 @@ export function usePushNotifications() {
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
     const rawData = window.atob(base64)
     const outputArray = new Uint8Array(rawData.length)
-
-    for (let i = 0; i < rawData.length; i += 1) {
-      outputArray[i] = rawData.charCodeAt(i)
-    }
-
+    for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i)
     return outputArray
   }
 
   async function subscribe() {
-    if (!supported.value || !profile.value) {
-      return
-    }
+    if (!supported.value || !profile.value) return
 
     permission.value = await Notification.requestPermission()
-
-    if (permission.value !== 'granted') {
-      return
-    }
+    if (permission.value !== 'granted') return
 
     const registration = await navigator.serviceWorker.ready
     const existing = await registration.pushManager.getSubscription()
@@ -36,20 +27,16 @@ export function usePushNotifications() {
       applicationServerKey: urlBase64ToUint8Array(config.public.vapidPublicKey),
     })
 
-    const json = subscription.toJSON()
-
-    const { error } = await supabase.from('push_subscriptions').upsert({
-      user_id: profile.value.id,
-      endpoint: json.endpoint,
-      p256dh: json.keys?.p256dh,
-      auth: json.keys?.auth,
-      user_agent: navigator.userAgent,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'endpoint' })
-
-    if (error) {
-      throw error
-    }
+    const data = subscription.toJSON()
+    await api.request('/push/subscriptions', {
+      method: 'POST',
+      body: {
+        endpoint: data.endpoint,
+        p256dh: data.keys?.p256dh,
+        auth: data.keys?.auth,
+        user_agent: navigator.userAgent,
+      },
+    })
   }
 
   onMounted(() => {

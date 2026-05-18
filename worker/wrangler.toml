@@ -1,0 +1,9 @@
+name = "home-todo-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "home-todo"
+database_id = "74791c90-5afe-40aa-87bd-71e6d68169fa"

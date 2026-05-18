@@ -1,125 +1,114 @@
 # Home Todo
 
-Mobile-first PWA for two family members: shared backlog, personal tasks, recurring tasks, realtime sync, push notifications, and app badge support.
+Mobile-first PWA for two family members: shared backlog, personal tasks, recurring tasks, push notifications, and app badge support.
 
 ## Stack
 
-- Nuxt 3 + Vue 3 + TypeScript
-- Vuetify
-- Supabase Auth, Postgres, Realtime, Edge Functions
-- Web Push + custom service worker
-- GitHub Pages static hosting
+- **Frontend:** Nuxt 3 + Vue 3 + TypeScript + Vuetify → GitHub Pages
+- **Backend:** Cloudflare Workers (Node.js compat) → free tier, works in Russia
+- **Database:** Cloudflare D1 (SQLite) → free tier
+- **Push:** Web Push (VAPID) via service worker
+- **Cron:** GitHub Actions (daily run for recurring tasks)
 
-## Local Setup
+## Local Development
 
 ```bash
 npm install
 cp .env.example .env
+# Fill NUXT_PUBLIC_API_URL with the deployed worker URL
 npm run dev
 ```
 
-Required public env vars:
+## Deploy: Cloudflare Worker (backend)
+
+### 1. Install wrangler and log in
 
 ```bash
-NUXT_APP_BASE_URL=/
-NUXT_PUBLIC_SUPABASE_URL=
-NUXT_PUBLIC_SUPABASE_ANON_KEY=
-NUXT_PUBLIC_VAPID_PUBLIC_KEY=
+cd worker
+npm install
+npx wrangler login
 ```
 
-## Supabase Setup
-
-1. Create a Supabase project.
-2. Run `supabase/migrations/001_initial_schema.sql`.
-3. Create two Auth users with emails matching app logins:
-   - `husband@home-todo.local`
-   - `wife@home-todo.local`
-4. Insert matching rows into `profiles`. Use `supabase/seed.sql` as a template.
-5. Enable Realtime for `tasks` and `recurring_tasks`.
-6. Deploy Edge Functions:
+### 2. Create D1 database
 
 ```bash
-supabase functions deploy send-push
-supabase functions deploy run-recurring
+npx wrangler d1 create home-todo
 ```
 
-7. Set Edge Function secrets:
+Copy the `database_id` from the output into `worker/wrangler.toml`.
+
+### 3. Apply schema
 
 ```bash
-supabase secrets set SUPABASE_URL=...
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
-supabase secrets set SUPABASE_ANON_KEY=...
-supabase secrets set VAPID_PUBLIC_KEY=...
-supabase secrets set VAPID_PRIVATE_KEY=...
-supabase secrets set VAPID_SUBJECT=mailto:you@example.com
+npx wrangler d1 execute home-todo --file=../worker/schema.sql
 ```
 
-8. Schedule `run-recurring` once per day in Supabase Scheduled Functions or call it from a Supabase cron job.
-
-## GitHub Pages Setup
-
-The repository includes `.github/workflows/deploy.yml`. It builds the app and deploys `.output/public` to GitHub Pages.
-
-1. Push the repository to GitHub.
-2. Open repository settings:
-
-```text
-Settings -> Pages
-```
-
-3. Set source to:
-
-```text
-GitHub Actions
-```
-
-4. Add repository secrets:
-
-```text
-Settings -> Secrets and variables -> Actions -> New repository secret
-```
-
-Required secrets:
+### 4. Generate VAPID keys
 
 ```bash
-NUXT_PUBLIC_SUPABASE_URL=
-NUXT_PUBLIC_SUPABASE_ANON_KEY=
-NUXT_PUBLIC_VAPID_PUBLIC_KEY=
+npx web-push generate-vapid-keys
 ```
 
-5. Push to `main` or run the workflow manually from:
+### 5. Set worker secrets
 
-```text
-Actions -> Deploy GitHub Pages -> Run workflow
+```bash
+npx wrangler secret put AUTH_SECRET          # random string, min 32 chars
+npx wrangler secret put VAPID_PUBLIC_KEY
+npx wrangler secret put VAPID_PRIVATE_KEY
+npx wrangler secret put VAPID_SUBJECT        # mailto:you@example.com
+npx wrangler secret put ADMIN_SETUP_TOKEN    # random string for one-time setup
+npx wrangler secret put CRON_SECRET          # random string for GitHub Actions cron
 ```
 
-The default GitHub Pages URL will be:
+### 6. Deploy
 
-```text
-https://<github-user>.github.io/home-todo/
+```bash
+npx wrangler deploy
 ```
 
-If the repository name is not `home-todo`, change this line in `.github/workflows/deploy.yml`:
+The worker URL will be `https://home-todo-api.<your-subdomain>.workers.dev`.
 
-```yaml
-NUXT_APP_BASE_URL: /home-todo/
+### 7. Create users (one-time)
+
+```bash
+curl -X POST https://home-todo-api.<subdomain>.workers.dev/setup \
+  -H "Authorization: Bearer <ADMIN_SETUP_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "users": [
+      { "login": "husband", "password": "...", "displayName": "Муж" },
+      { "login": "wife", "password": "...", "displayName": "Жена" }
+    ]
+  }'
 ```
 
-For example, for a repository named `family-tasks`:
+## Deploy: GitHub Pages (frontend)
 
-```yaml
-NUXT_APP_BASE_URL: /family-tasks/
+### 1. Push repository to GitHub
+
+### 2. Settings → Pages → Source: GitHub Actions
+
+### 3. Add repository secrets (Settings → Secrets → Actions)
+
 ```
+NUXT_PUBLIC_API_URL=https://home-todo-api.<subdomain>.workers.dev
+NUXT_PUBLIC_VAPID_PUBLIC_KEY=<your VAPID public key>
+CRON_SECRET=<same value as worker secret>
+```
+
+### 4. Push to `main` — deploy runs automatically
+
+GitHub Pages URL: `https://<github-user>.github.io/home-todo/`
+
+If the repository name differs, update `NUXT_APP_BASE_URL` in `.github/workflows/deploy.yml`.
+
+## Recurring tasks cron
+
+`.github/workflows/run-recurring.yml` runs daily at 05:00 UTC and calls `POST /cron/run-recurring` on the worker.
 
 ## Verification
 
 ```bash
 npm run typecheck
-npm run generate
-```
-
-To verify the GitHub Pages base path locally:
-
-```bash
-NUXT_APP_BASE_URL=/home-todo/ npm run generate
+cd worker && npx tsc --noEmit
 ```
