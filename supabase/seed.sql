@@ -1,0 +1,7 @@
+-- Replace ids with actual auth.users ids after creating two users in Supabase Auth.
+-- Login uses email format in the app: <login>@home-todo.local
+--
+-- insert into public.profiles (id, login, display_name)
+-- values
+--   ('00000000-0000-0000-0000-000000000001', 'husband', 'Муж'),
+--   ('00000000-0000-0000-0000-000000000002', 'wife', 'Жена');

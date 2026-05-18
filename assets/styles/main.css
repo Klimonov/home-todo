@@ -1,0 +1,48 @@
+:root {
+  color-scheme: light;
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+  margin: 0;
+  background: #f6f7f4;
+}
+
+body {
+  font-family: Roboto, Arial, sans-serif;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  background: #f6f7f4;
+}
+
+.mobile-page {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 12px calc(88px + var(--app-safe-bottom));
+}
+
+.screen-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.task-card {
+  border: 1px solid rgba(28, 38, 34, 0.08);
+}
+
+.bottom-nav {
+  padding-bottom: var(--app-safe-bottom);
+}
+
+.empty-state {
+  color: #647067;
+  text-align: center;
+  padding: 40px 20px;
+}
