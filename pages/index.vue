@@ -37,7 +37,7 @@ async function handleAssign(taskId: Parameters<typeof assignTask>[0]) {
     <div class="d-flex align-center mb-4">
       <div>
         <h1 class="screen-title">Backlog</h1>
-        <div class="text-body-2 text-medium-emphasis">Общие задачи, которые можно забрать себе</div>
+        <div class="text-body-2 text-medium-emphasis">Общие задачи 0, которые можно забрать себе</div>
       </div>
       <v-spacer />
       <v-btn color="primary" icon="mdi-plus" @click="dialogOpen = true" />
