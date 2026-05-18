@@ -8,15 +8,28 @@ declare const self: ServiceWorkerGlobalScope & {
 cleanupOutdatedCaches()
 precacheAndRoute(self.__WB_MANIFEST)
 
+function resolveAppUrl(url?: string) {
+  if (!url) {
+    return self.registration.scope
+  }
+
+  if (/^https?:\/\//.test(url)) {
+    return url
+  }
+
+  return new URL(url.replace(/^\/+/, ''), self.registration.scope).toString()
+}
+
 self.addEventListener('push', (event) => {
   const data = event.data?.json() ?? {}
   const title = data.title ?? 'Home Todo'
+  const iconUrl = new URL('pwa.svg', self.registration.scope).toString()
   const options: NotificationOptions = {
     body: data.body ?? 'Новое уведомление',
-    icon: '/pwa.svg',
-    badge: '/pwa.svg',
+    icon: iconUrl,
+    badge: iconUrl,
     data: {
-      url: data.url ?? '/',
+      url: resolveAppUrl(data.url),
     },
   }
 
@@ -25,7 +38,7 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const targetUrl = event.notification.data?.url ?? '/'
+  const targetUrl = resolveAppUrl(event.notification.data?.url)
 
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })

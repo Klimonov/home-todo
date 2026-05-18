@@ -8,7 +8,7 @@ Mobile-first PWA for two family members: shared backlog, personal tasks, recurri
 - Vuetify
 - Supabase Auth, Postgres, Realtime, Edge Functions
 - Web Push + custom service worker
-- Netlify static hosting
+- GitHub Pages static hosting
 
 ## Local Setup
 
@@ -21,6 +21,7 @@ npm run dev
 Required public env vars:
 
 ```bash
+NUXT_APP_BASE_URL=/
 NUXT_PUBLIC_SUPABASE_URL=
 NUXT_PUBLIC_SUPABASE_ANON_KEY=
 NUXT_PUBLIC_VAPID_PUBLIC_KEY=
@@ -55,23 +56,30 @@ supabase secrets set VAPID_SUBJECT=mailto:you@example.com
 
 8. Schedule `run-recurring` once per day in Supabase Scheduled Functions or call it from a Supabase cron job.
 
-## Netlify Setup
+## GitHub Pages Setup
 
-Connect the GitHub repository to Netlify.
+The repository includes `.github/workflows/deploy.yml`. It builds the app and deploys `.output/public` to GitHub Pages.
 
-Build command:
+1. Push the repository to GitHub.
+2. Open repository settings:
 
-```bash
-npm run generate
+```text
+Settings -> Pages
 ```
 
-Publish directory:
+3. Set source to:
 
-```bash
-dist
+```text
+GitHub Actions
 ```
 
-Set these Netlify environment variables:
+4. Add repository secrets:
+
+```text
+Settings -> Secrets and variables -> Actions -> New repository secret
+```
+
+Required secrets:
 
 ```bash
 NUXT_PUBLIC_SUPABASE_URL=
@@ -79,9 +87,39 @@ NUXT_PUBLIC_SUPABASE_ANON_KEY=
 NUXT_PUBLIC_VAPID_PUBLIC_KEY=
 ```
 
+5. Push to `main` or run the workflow manually from:
+
+```text
+Actions -> Deploy GitHub Pages -> Run workflow
+```
+
+The default GitHub Pages URL will be:
+
+```text
+https://<github-user>.github.io/home-todo/
+```
+
+If the repository name is not `home-todo`, change this line in `.github/workflows/deploy.yml`:
+
+```yaml
+NUXT_APP_BASE_URL: /home-todo/
+```
+
+For example, for a repository named `family-tasks`:
+
+```yaml
+NUXT_APP_BASE_URL: /family-tasks/
+```
+
 ## Verification
 
 ```bash
 npm run typecheck
 npm run generate
+```
+
+To verify the GitHub Pages base path locally:
+
+```bash
+NUXT_APP_BASE_URL=/home-todo/ npm run generate
 ```

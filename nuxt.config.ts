@@ -1,8 +1,17 @@
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 
+declare const process: {
+  env: Record<string, string | undefined>
+}
+
+const baseURL = process.env.NUXT_APP_BASE_URL || '/'
+
 export default defineNuxtConfig({
   ssr: false,
   compatibilityDate: '2026-05-18',
+  app: {
+    baseURL,
+  },
   css: ['vuetify/styles', '@mdi/font/css/materialdesignicons.min.css', '~/assets/styles/main.css'],
   modules: [
     '@vite-pwa/nuxt',
@@ -42,11 +51,11 @@ export default defineNuxtConfig({
       background_color: '#f6f7f4',
       display: 'standalone',
       orientation: 'portrait',
-      scope: '/',
-      start_url: '/',
+      scope: baseURL,
+      start_url: baseURL,
       icons: [
         {
-          src: '/pwa.svg',
+          src: `${baseURL}pwa.svg`,
           sizes: 'any',
           type: 'image/svg+xml',
           purpose: 'any maskable',
