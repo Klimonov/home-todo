@@ -68,7 +68,7 @@ npm run generate
 Publish directory:
 
 ```bash
-.output/public
+dist
 ```
 
 Set these Netlify environment variables:

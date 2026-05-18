@@ -31,7 +31,7 @@ async function submit() {
             <v-icon icon="mdi-format-list-checks" />
           </v-avatar>
           <div>
-            <h1 class="screen-title">Home Todo</h1>
+            <h1 class="screen-title">Home Todo1</h1>
             <div class="text-body-2 text-medium-emphasis">Семейный список дел</div>
           </div>
         </div>
