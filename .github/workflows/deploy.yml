@@ -35,8 +35,7 @@ jobs:
         run: npm run generate
         env:
           NUXT_APP_BASE_URL: /home-todo/
-          NUXT_PUBLIC_SUPABASE_URL: ${{ secrets.NUXT_PUBLIC_SUPABASE_URL }}
-          NUXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NUXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NUXT_PUBLIC_API_URL: ${{ secrets.NUXT_PUBLIC_API_URL }}
           NUXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ secrets.NUXT_PUBLIC_VAPID_PUBLIC_KEY }}
 
       - name: Upload artifact
